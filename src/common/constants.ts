@@ -19,13 +19,13 @@ export const DEFAULT_CONFIG: ExtensionConfig = {
  * Avatar state to image file mapping
  */
 export const AVATAR_IMAGES: Record<AvatarState, string> = {
-  [AvatarState.IDLE]: 'assets/avatar/idle.webp',
-  [AvatarState.THINKING]: 'assets/avatar/thinking.webp',
-  [AvatarState.SPEAKING]: 'assets/avatar/speaking.webp',
-  [AvatarState.HAPPY]: 'assets/avatar/happy.webp',
-  [AvatarState.SAD]: 'assets/avatar/sad.webp',
-  [AvatarState.EXCITED]: 'assets/avatar/excited.webp',
-  [AvatarState.CONFUSED]: 'assets/avatar/confused.webp',
+  [AvatarState.IDLE]: 'assets/avatar/idle.svg',
+  [AvatarState.THINKING]: 'assets/avatar/thinking.svg',
+  [AvatarState.SPEAKING]: 'assets/avatar/speaking.svg',
+  [AvatarState.HAPPY]: 'assets/avatar/happy.svg',
+  [AvatarState.SAD]: 'assets/avatar/sad.svg',
+  [AvatarState.EXCITED]: 'assets/avatar/excited.svg',
+  [AvatarState.CONFUSED]: 'assets/avatar/confused.svg',
 };
 
 /**
