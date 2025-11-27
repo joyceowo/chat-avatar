@@ -25,7 +25,8 @@
         "https://gemini.google.com/*"
       ],
       "js": ["contentScript.js"],
-      "run_at": "document_idle"
+      "run_at": "document_idle",
+      "type": "module"
     }
   ],
   "options_page": "options.html",

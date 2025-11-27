@@ -12,8 +12,9 @@ export default defineConfig({
         options: resolve(__dirname, 'src/options/options.ts'),
       },
       output: {
+        format: 'es',
         entryFileNames: '[name].js',
-        chunkFileNames: 'chunks/[name].[hash].js',
+        chunkFileNames: 'chunks/[name].js',
         assetFileNames: (assetInfo) => {
           if (assetInfo.name === 'options.html') {
             return '[name].[ext]';
