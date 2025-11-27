@@ -25,8 +25,7 @@
         "https://gemini.google.com/*"
       ],
       "js": ["contentScript.js"],
-      "run_at": "document_idle",
-      "type": "module"
+      "run_at": "document_idle"
     }
   ],
   "options_page": "options.html",
@@ -35,8 +34,7 @@
       "resources": [
         "assets/avatar/*.webp",
         "assets/avatar/*.gif",
-        "assets/avatar/*.png",
-        "chunks/*.js"
+        "assets/avatar/*.png"
       ],
       "matches": ["<all_urls>"]
     }

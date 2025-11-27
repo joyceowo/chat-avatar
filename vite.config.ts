@@ -14,16 +14,18 @@ export default defineConfig({
       output: {
         format: 'es',
         entryFileNames: '[name].js',
-        chunkFileNames: 'chunks/[name].js',
         assetFileNames: (assetInfo) => {
           if (assetInfo.name === 'options.html') {
             return '[name].[ext]';
           }
           return 'assets/[name].[ext]';
         },
+        // Preserve module structure
+        preserveModules: true,
+        preserveModulesRoot: 'src',
       },
     },
-    minify: false, // Easier to debug, can enable for production
+    minify: false,
     sourcemap: true,
   },
   plugins: [
