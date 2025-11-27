@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "AI Avatar Overlay",
+  "name": "AI Avatar Overlay v2",
   "version": "0.0.2",
   "description": "Displays an animated avatar that responds to AI chat interactions",
   "permissions": [
