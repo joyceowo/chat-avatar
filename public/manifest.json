@@ -35,7 +35,8 @@
       "resources": [
         "assets/avatar/*.webp",
         "assets/avatar/*.gif",
-        "assets/avatar/*.png"
+        "assets/avatar/*.png",
+        "chunks/*.js"
       ],
       "matches": ["<all_urls>"]
     }
