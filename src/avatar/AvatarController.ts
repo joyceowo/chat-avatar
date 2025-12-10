@@ -14,7 +14,10 @@ export class AvatarController implements IAvatarController {
   private stateTimeout: ReturnType<typeof setTimeout> | null = null;
 
   constructor(private overlay: IAvatarOverlay) {
-    this.setState(AvatarState.IDLE);
+    // Delay initial state to ensure chrome API is ready
+    setTimeout(() => {
+      this.setState(AvatarState.IDLE);
+    }, 100);
   }
 
   public setState(state: AvatarState): void {
@@ -47,15 +50,22 @@ export class AvatarController implements IAvatarController {
     // Otherwise default to SPEAKING
     const targetState = emotion || AvatarState.SPEAKING;
 
+    console.log('🎭 Avatar state change:', {
+      from: this.currentState,
+      to: targetState,
+      emotion: emotion ? emotion : 'default',
+      textLength: text.length,
+    });
+
+    // Clear any existing timeout
+    if (this.stateTimeout) {
+      clearTimeout(this.stateTimeout);
+      this.stateTimeout = null;
+    }
+
     this.setState(targetState);
 
-    // Calculate how long to stay in this state based on text length
-    const duration = calculateSpeakingDuration(text);
-
-    // Return to IDLE after duration
-    this.stateTimeout = setTimeout(() => {
-      this.setState(AvatarState.IDLE);
-    }, duration);
+    console.log('✨ Avatar will stay in this state until next response or page change');
   }
 
   /**

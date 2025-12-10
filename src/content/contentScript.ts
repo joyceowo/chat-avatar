@@ -8,7 +8,7 @@ import { AvatarController } from '@/avatar/AvatarController';
 import { ResponseWatcher } from './ResponseWatcher';
 import { SiteAdapterFactory } from '@/adapters/SiteAdapterFactory';
 import { detectSite } from '@/common/utils';
-import { TargetSite, MessageType } from '@/common/types';
+import { TargetSite, MessageType, AvatarState } from '@/common/types';
 import type { AiResponse, ExtensionMessage, EmotionAnalysis } from '@/common/types';
 
 class ContentScriptApp {
@@ -46,13 +46,14 @@ class ContentScriptApp {
       // Listen for AI responses
       this.watcher.onResponse((response) => this.handleAiResponse(response));
 
-      // Start watching
+      // Start the watcher immediately
+      // It will handle marking existing responses internally
       this.watcher.start();
+
+      console.log('AI Avatar Overlay: Initialized successfully');
 
       // Listen for messages from background
       chrome.runtime.onMessage.addListener(this.handleMessage.bind(this));
-
-      console.log('AI Avatar Overlay: Initialized successfully');
     } catch (error) {
       console.error('AI Avatar Overlay: Initialization failed', error);
     }
@@ -60,6 +61,8 @@ class ContentScriptApp {
 
   private handleAiResponse(response: AiResponse): void {
     if (!this.controller) return;
+
+    console.log('📨 Handling AI response in contentScript');
 
     // Check if LLM emotion analysis is enabled
     this.checkEmotionAnalysis(response);
@@ -76,15 +79,20 @@ class ContentScriptApp {
       chrome.runtime.sendMessage(message, (result) => {
         if (chrome.runtime.lastError) {
           // LLM not configured, use default behavior
+          console.log('⚠️ Background service error, using default behavior');
           this.controller?.onNewResponse(response.text);
           return;
         }
 
+        console.log('🧠 Emotion analysis result:', result);
+
         if (result && result.emotion) {
-          // Use LLM-analyzed emotion
+          // Use analyzed emotion
+          console.log('✨ Using emotion:', result.emotion, `(confidence: ${result.confidence || 'N/A'})`);
           this.controller?.onNewResponse(response.text, result.emotion);
         } else {
-          // Fallback to default
+          // Fallback to default (no emotion parameter = will use SPEAKING)
+          console.log('💬 Using default SPEAKING state');
           this.controller?.onNewResponse(response.text);
         }
       });

@@ -15,7 +15,20 @@ export function createMessage<T>(type: string, payload: T): ExtensionMessage<T> 
  * Get Chrome extension URL for an asset
  */
 export function getAssetUrl(path: string): string {
-  return chrome.runtime.getURL(path);
+  try {
+    if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getURL) {
+      const url = chrome.runtime.getURL(path);
+      if (url) {
+        return url;
+      }
+    }
+  } catch (error) {
+    console.error('Error getting asset URL:', error);
+  }
+
+  // Fallback: return path as-is (will fail but won't crash)
+  console.warn(`Failed to get chrome extension URL for: ${path}`);
+  return path;
 }
 
 /**

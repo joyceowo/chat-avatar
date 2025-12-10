@@ -150,18 +150,112 @@ class OpenAiAdapter extends BaseLlmAdapter {
 }
 
 /**
- * No-op adapter when LLM is disabled
+ * Local emotion analyzer - uses keyword matching (no API required)
  */
-class NoOpAdapter implements ILlmAdapter {
-  public async analyzeEmotion(_text: string): Promise<EmotionAnalysis> {
+class LocalEmotionAdapter implements ILlmAdapter {
+  public async analyzeEmotion(text: string): Promise<EmotionAnalysis> {
+    const emotion = this.analyzeEmotionLocally(text);
+
     return {
-      emotion: AvatarState.SPEAKING,
-      confidence: 1.0,
+      emotion,
+      confidence: 0.7,
+      reasoning: 'Local keyword-based analysis',
     };
   }
 
   public isConfigured(): boolean {
     return true;
+  }
+
+  private analyzeEmotionLocally(text: string): AvatarState {
+    const lowerText = text.toLowerCase();
+
+    // Happy keywords (positive, cheerful)
+    const happyKeywords = [
+      '太好了', '很棒', '恭喜', '成功', '完美', '優秀', '讚', '厲害',
+      '開心', '高興', '快樂', '喜歡', '愛', '感謝', '謝謝',
+      'great', 'awesome', 'excellent', 'perfect', 'wonderful', 'amazing',
+      'happy', 'glad', 'love', 'thank', 'congratulations', '😊', '😄', '🎉',
+    ];
+
+    // Sad keywords (negative, disappointed)
+    const sadKeywords = [
+      '抱歉', '遺憾', '可惜', '失望', '難過', '傷心', '不幸', '糟糕',
+      '失敗', '錯誤', '問題', '壞', '差',
+      'sorry', 'unfortunately', 'sad', 'disappointed', 'fail', 'error',
+      'problem', 'issue', 'bad', 'wrong', '😢', '😞',
+    ];
+
+    // Excited keywords (enthusiastic, energetic)
+    const excitedKeywords = [
+      '太棒了', '驚人', '不可思議', '哇', '酷', '超級', '極了',
+      '令人興奮', '精彩', '絕佳',
+      'wow', 'incredible', 'fantastic', 'brilliant', 'outstanding',
+      'exciting', 'amazing', 'spectacular', '🎉', '🚀', '✨',
+    ];
+
+    // Confused keywords (uncertain, unclear)
+    const confusedKeywords = [
+      '不確定', '可能', '也許', '或許', '不清楚', '困惑', '疑問',
+      '不太明白', '難以', '複雜',
+      'uncertain', 'maybe', 'perhaps', 'confused', 'unclear', 'not sure',
+      'difficult', 'complex', 'complicated', '🤔', '❓',
+    ];
+
+    // Angry keywords (frustrated, annoyed)
+    const angryKeywords = [
+      '生氣', '憤怒', '煩', '討厭', '受不了', '太誇張', '到底',
+      '什麼鬼', '搞砸', '爛', '糟透了',
+      'angry', 'frustrated', 'annoyed', 'terrible', 'awful', 'ridiculous',
+      'damn', 'hell', '😠', '😡', '💢',
+    ];
+
+    // Count keyword matches
+    let happyScore = 0;
+    let sadScore = 0;
+    let excitedScore = 0;
+    let confusedScore = 0;
+    let angryScore = 0;
+
+    happyKeywords.forEach(keyword => {
+      if (lowerText.includes(keyword)) happyScore++;
+    });
+
+    sadKeywords.forEach(keyword => {
+      if (lowerText.includes(keyword)) sadScore++;
+    });
+
+    excitedKeywords.forEach(keyword => {
+      if (lowerText.includes(keyword)) excitedScore++;
+    });
+
+    confusedKeywords.forEach(keyword => {
+      if (lowerText.includes(keyword)) confusedScore++;
+    });
+
+    angryKeywords.forEach(keyword => {
+      if (lowerText.includes(keyword)) angryScore++;
+    });
+
+    // Determine emotion based on highest score
+    const scores = [
+      { emotion: AvatarState.HAPPY, score: happyScore },
+      { emotion: AvatarState.SAD, score: sadScore },
+      { emotion: AvatarState.EXCITED, score: excitedScore },
+      { emotion: AvatarState.CONFUSED, score: confusedScore },
+      { emotion: AvatarState.SAD, score: angryScore }, // Map angry to sad for now
+    ];
+
+    const maxScore = Math.max(happyScore, sadScore, excitedScore, confusedScore, angryScore);
+
+    // If no keywords matched, use default SPEAKING
+    if (maxScore === 0) {
+      return AvatarState.SPEAKING;
+    }
+
+    // Return the emotion with highest score
+    const result = scores.find(s => s.score === maxScore);
+    return result?.emotion || AvatarState.SPEAKING;
   }
 }
 
@@ -186,7 +280,7 @@ export class LlmAdapterFactory implements ILlmAdapterFactory {
         );
       case LlmProvider.NONE:
       default:
-        return new NoOpAdapter();
+        return new LocalEmotionAdapter();
     }
   }
 }

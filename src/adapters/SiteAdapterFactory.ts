@@ -36,8 +36,20 @@ class ChatGptAdapter extends BaseSiteAdapter {
   }
 
   public extractTextFromElement(element: Element): string {
+    // Try multiple selectors for ChatGPT's changing DOM structure
     const markdown = element.querySelector('.markdown');
-    return markdown?.textContent?.trim() || super.extractTextFromElement(element);
+    if (markdown?.textContent?.trim()) {
+      return markdown.textContent.trim();
+    }
+
+    // Try direct text content
+    const directText = element.textContent?.trim();
+    if (directText) {
+      return directText;
+    }
+
+    // Fallback to base implementation
+    return super.extractTextFromElement(element);
   }
 }
 

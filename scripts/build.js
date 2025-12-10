@@ -29,6 +29,9 @@ async function build() {
     define: {
       'process.env.NODE_ENV': '"production"',
     },
+    // Ensure chrome API is accessible
+    platform: 'browser',
+    globalName: 'ChromeExtension',
   });
   
   console.log('✓ Built JavaScript files');
