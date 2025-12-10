@@ -54,9 +54,9 @@ export class ResponseWatcher implements IResponseWatcher {
     const existingResponses = document.querySelectorAll(selector);
 
     if (existingResponses.length === 0 && attempt < 10) {
-      // Retry after 500ms if no responses found (max 10 attempts = 5 seconds)
-      console.log(`⏳ No responses found yet, retrying in 0.5s (attempt ${attempt + 1}/10)...`);
-      setTimeout(() => this.markExistingResponsesWithRetry(attempt + 1, onComplete), 500);
+      // Retry after 2 seconds if no responses found (max 10 attempts = 20 seconds)
+      console.log(`⏳ No responses found yet, retrying in 2s (attempt ${attempt + 1}/10)...`);
+      setTimeout(() => this.markExistingResponsesWithRetry(attempt + 1, onComplete), 2000);
       return;
     }
 

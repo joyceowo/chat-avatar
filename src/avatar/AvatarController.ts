@@ -15,6 +15,8 @@ export class AvatarController implements IAvatarController {
   private stateTimeout: ReturnType<typeof setTimeout> | null = null;
   private customAvatars: CustomAvatarImages = {};
   private lastIdleVariant: AvatarState = AvatarState.IDLE;
+  private autoResetTimeout: ReturnType<typeof setTimeout> | null = null;
+  private readonly AUTO_RESET_DELAY = 3 * 60 * 1000; // 3 minutes in milliseconds
 
   constructor(private overlay: IAvatarOverlay) {
     // Delay initial state to ensure chrome API is ready
@@ -66,6 +68,9 @@ export class AvatarController implements IAvatarController {
       clearTimeout(this.stateTimeout);
       this.stateTimeout = null;
     }
+
+    // Start auto-reset timer (3 minutes)
+    this.startAutoResetTimer();
   }
 
   public getState(): AvatarState {
@@ -80,6 +85,9 @@ export class AvatarController implements IAvatarController {
    * Handle new AI response - triggers state transitions
    */
   public onNewResponse(text: string, emotion?: AvatarState): void {
+    // Reset the auto-reset timer on new response
+    this.startAutoResetTimer();
+
     // If emotion is provided (from LLM analysis), use it
     // Otherwise keep current state (don't change)
     if (!emotion) {
@@ -118,6 +126,43 @@ export class AvatarController implements IAvatarController {
     this.setState(AvatarState.IDLE);
   }
 
+  /**
+   * Start auto-reset timer (3 minutes)
+   * Automatically returns to idle state after 3 minutes of inactivity
+   */
+  private startAutoResetTimer(): void {
+    // Clear existing timer
+    if (this.autoResetTimeout) {
+      clearTimeout(this.autoResetTimeout);
+      this.autoResetTimeout = null;
+    }
+
+    // Set new timer
+    this.autoResetTimeout = setTimeout(() => {
+      console.log('⏰ Auto-reset: 3 minutes of inactivity, returning to idle state');
+      this.resetToIdle();
+    }, this.AUTO_RESET_DELAY);
+  }
+
+  /**
+   * Reset to idle state and clear all timers
+   */
+  private resetToIdle(): void {
+    // Clear all timers
+    if (this.stateTimeout) {
+      clearTimeout(this.stateTimeout);
+      this.stateTimeout = null;
+    }
+    if (this.autoResetTimeout) {
+      clearTimeout(this.autoResetTimeout);
+      this.autoResetTimeout = null;
+    }
+
+    // Return to idle
+    this.setState(AvatarState.IDLE);
+    console.log('🔄 State reset to idle');
+  }
+
   private updateOverlayImage(): void {
     // Use custom avatar if available, otherwise use default
     const customUrl = this.customAvatars[this.currentState];
@@ -144,6 +189,9 @@ export class AvatarController implements IAvatarController {
   public destroy(): void {
     if (this.stateTimeout) {
       clearTimeout(this.stateTimeout);
+    }
+    if (this.autoResetTimeout) {
+      clearTimeout(this.autoResetTimeout);
     }
     this.stateChangeCallbacks = [];
   }
