@@ -15,6 +15,9 @@ export class ResponseWatcher implements IResponseWatcher {
   private isRunning = false;
   private pendingElements = new Map<Element, number>(); // Track elements and retry count
   private recheckTimeout: NodeJS.Timeout | null = null;
+  private processedElements = new WeakSet<Element>(); // Track elements we've already given up on
+  private responseCompletionTimers = new Map<Element, NodeJS.Timeout>(); // Track completion timers for each response
+  private lastTextLength = new Map<Element, number>(); // Track last text length for each element
 
   constructor(
     private siteAdapter: ISiteAdapter,
@@ -98,6 +101,12 @@ export class ResponseWatcher implements IResponseWatcher {
       this.observer.disconnect();
       this.observer = null;
     }
+
+    // Clear all completion timers
+    this.responseCompletionTimers.forEach((timer) => clearTimeout(timer));
+    this.responseCompletionTimers.clear();
+    this.lastTextLength.clear();
+
     this.isRunning = false;
   }
 
@@ -107,8 +116,31 @@ export class ResponseWatcher implements IResponseWatcher {
 
   private handleMutations(mutations: MutationRecord[]): void {
     for (const mutation of mutations) {
+      // Handle new nodes being added
       if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
         this.checkForNewResponses(mutation.addedNodes);
+      }
+
+      // Handle text content changes (AI typing in existing element)
+      if (mutation.type === 'characterData' || mutation.type === 'childList') {
+        // Check if the mutation target or its parent is a response element
+        let element = mutation.target as Element;
+
+        // If target is a text node, get its parent element
+        if (element.nodeType === Node.TEXT_NODE) {
+          element = element.parentElement as Element;
+        }
+
+        if (element && this.siteAdapter.isAiResponseElement(element)) {
+          this.processResponseElement(element);
+        } else if (element) {
+          // Check if any ancestor is a response element
+          const selector = this.siteAdapter.getResponseSelector();
+          const responseElement = element.closest(selector);
+          if (responseElement) {
+            this.processResponseElement(responseElement);
+          }
+        }
       }
     }
   }
@@ -136,6 +168,11 @@ export class ResponseWatcher implements IResponseWatcher {
 
     // If text is empty or too short, add to pending and schedule recheck
     if (!text || text.length < 3) {
+      // Skip if we've already given up on this element (empty text after retries)
+      if (this.processedElements.has(element)) {
+        return;
+      }
+
       const retryCount = this.pendingElements.get(element) || 0;
 
       // Max 3 retries to avoid infinite loop
@@ -147,14 +184,71 @@ export class ResponseWatcher implements IResponseWatcher {
         }
         this.scheduleRecheck();
       } else {
-        // Give up after 3 retries (silently, this is normal for UI elements)
+        // Give up after 3 retries and mark as processed to avoid re-checking
         this.pendingElements.delete(element);
+        this.processedElements.add(element);
       }
       return;
     }
 
+    // If element has text, remove it from processedElements (allow new responses)
+    this.processedElements.delete(element);
+
     // Remove from pending if it was there
     this.pendingElements.delete(element);
+
+    // Check if text is still changing (AI is still typing)
+    const lastLength = this.lastTextLength.get(element) || 0;
+    const currentLength = text.length;
+
+    // If text length changed, AI is still typing
+    if (currentLength !== lastLength) {
+      this.lastTextLength.set(element, currentLength);
+
+      // Clear existing completion timer
+      const existingTimer = this.responseCompletionTimers.get(element);
+      if (existingTimer) {
+        clearTimeout(existingTimer);
+      }
+
+      // Use shorter wait time (800ms) to be more responsive
+      // This means: if text stops changing for 800ms, we consider it complete
+      const completionTimer = setTimeout(() => {
+        // Double-check the text length hasn't changed
+        const finalText = this.siteAdapter.extractTextFromElement(element);
+        const finalLength = finalText.length;
+
+        if (finalLength === this.lastTextLength.get(element)) {
+          console.log('✅ AI response completed, analyzing emotion...');
+          this.finalizeResponse(element, finalText);
+        }
+      }, 800);
+
+      this.responseCompletionTimers.set(element, completionTimer);
+
+      // Log only on first detection
+      if (lastLength === 0) {
+        console.log('⏳ AI is typing, waiting for completion...');
+      }
+
+      return;
+    }
+
+    // If we reach here, text hasn't changed - finalize immediately
+    this.finalizeResponse(element, text);
+  }
+
+  private finalizeResponse(element: Element, text: string): void {
+    // Clean up timers and tracking
+    const timer = this.responseCompletionTimers.get(element);
+    if (timer) {
+      clearTimeout(timer);
+      this.responseCompletionTimers.delete(element);
+    }
+    this.lastTextLength.delete(element);
+
+    // Don't add to processedElements - we want to allow new responses in the same element
+    // processedElements is only for elements that never get text (to prevent infinite loops)
 
     // Create a hash of the text to track processed responses
     const textHash = this.hashText(text);
@@ -198,14 +292,16 @@ export class ResponseWatcher implements IResponseWatcher {
       clearTimeout(this.recheckTimeout);
     }
 
-    // Schedule recheck after 2 seconds (increased from 1 second)
+    // Schedule recheck after 1.5 seconds
     this.recheckTimeout = setTimeout(() => {
       if (this.pendingElements.size > 0) {
         const elements = Array.from(this.pendingElements.keys());
         // Don't clear the map, let processResponseElement handle it
         elements.forEach((el) => this.processResponseElement(el));
       }
-    }, 2000);
+      // Clear timeout reference
+      this.recheckTimeout = null;
+    }, 1500);
   }
 
   private hashText(text: string): string {

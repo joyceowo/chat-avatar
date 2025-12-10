@@ -20,12 +20,17 @@ export const DEFAULT_CONFIG: ExtensionConfig = {
  */
 export const AVATAR_IMAGES: Record<AvatarState, string> = {
   [AvatarState.IDLE]: 'assets/avatar/idle.svg',
+  [AvatarState.IDLE2]: 'assets/avatar/idle2.svg',
+  [AvatarState.IDLE3]: 'assets/avatar/idle3.svg',
   [AvatarState.THINKING]: 'assets/avatar/thinking.svg',
-  [AvatarState.SPEAKING]: 'assets/avatar/speaking.svg',
   [AvatarState.HAPPY]: 'assets/avatar/happy.svg',
   [AvatarState.SAD]: 'assets/avatar/sad.svg',
   [AvatarState.EXCITED]: 'assets/avatar/excited.svg',
   [AvatarState.CONFUSED]: 'assets/avatar/confused.svg',
+  [AvatarState.ANGRY]: 'assets/avatar/angry.svg',
+  [AvatarState.SURPRISED]: 'assets/avatar/surprised.svg',
+  [AvatarState.WORRIED]: 'assets/avatar/worried.svg',
+  [AvatarState.NEUTRAL]: 'assets/avatar/neutral.svg',
 };
 
 /**
@@ -44,6 +49,7 @@ export const SPEAKING_DURATION_PER_CHAR_MS = 50;
  * Chrome storage keys
  */
 export const STORAGE_KEY_CONFIG = 'extensionConfig';
+export const STORAGE_KEY_CUSTOM_AVATARS = 'customAvatars';
 
 /**
  * Site-specific selectors

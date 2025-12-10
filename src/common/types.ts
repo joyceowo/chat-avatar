@@ -7,12 +7,17 @@
  */
 export enum AvatarState {
   IDLE = 'idle',
+  IDLE2 = 'idle2',
+  IDLE3 = 'idle3',
   THINKING = 'thinking',
-  SPEAKING = 'speaking',
   HAPPY = 'happy',
   SAD = 'sad',
   EXCITED = 'excited',
   CONFUSED = 'confused',
+  ANGRY = 'angry',
+  SURPRISED = 'surprised',
+  WORRIED = 'worried',
+  NEUTRAL = 'neutral',
 }
 
 /**
@@ -33,7 +38,26 @@ export enum TargetSite {
 }
 
 /**
- * Configuration stored in Chrome storage
+ * Custom avatar images (URLs or data URLs)
+ */
+export interface CustomAvatarImages {
+  [AvatarState.IDLE]?: string;
+  [AvatarState.IDLE2]?: string;
+  [AvatarState.IDLE3]?: string;
+  [AvatarState.THINKING]?: string;
+  [AvatarState.HAPPY]?: string;
+  [AvatarState.SAD]?: string;
+  [AvatarState.EXCITED]?: string;
+  [AvatarState.CONFUSED]?: string;
+  [AvatarState.ANGRY]?: string;
+  [AvatarState.SURPRISED]?: string;
+  [AvatarState.WORRIED]?: string;
+  [AvatarState.NEUTRAL]?: string;
+}
+
+/**
+ * Configuration stored in Chrome storage (sync)
+ * Note: Custom avatars are stored separately in local storage due to size limits
  */
 export interface ExtensionConfig {
   enabled: boolean;

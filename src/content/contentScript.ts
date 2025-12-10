@@ -10,6 +10,7 @@ import { SiteAdapterFactory } from '@/adapters/SiteAdapterFactory';
 import { detectSite } from '@/common/utils';
 import { TargetSite, MessageType, AvatarState } from '@/common/types';
 import type { AiResponse, ExtensionMessage, EmotionAnalysis } from '@/common/types';
+import { STORAGE_KEY_CUSTOM_AVATARS } from '@/common/constants';
 
 class ContentScriptApp {
   private overlay: AvatarOverlay | null = null;
@@ -36,6 +37,9 @@ class ContentScriptApp {
       this.overlay = new AvatarOverlay();
       this.controller = new AvatarController(this.overlay);
 
+      // Load custom avatars from config
+      await this.loadCustomAvatars();
+
       // Enable dragging
       this.overlay.enableDragging();
 
@@ -59,6 +63,21 @@ class ContentScriptApp {
     }
   }
 
+  private async loadCustomAvatars(): Promise<void> {
+    try {
+      // Load custom avatars from local storage (larger quota)
+      const result = await chrome.storage.local.get(STORAGE_KEY_CUSTOM_AVATARS);
+      const customAvatars = result[STORAGE_KEY_CUSTOM_AVATARS];
+
+      if (customAvatars && this.controller) {
+        this.controller.setCustomAvatars(customAvatars);
+        console.log('✅ Custom avatars loaded:', Object.keys(customAvatars).length, 'states');
+      }
+    } catch (error) {
+      console.error('Failed to load custom avatars:', error);
+    }
+  }
+
   private handleAiResponse(response: AiResponse): void {
     if (!this.controller) return;
 
@@ -78,9 +97,8 @@ class ContentScriptApp {
 
       chrome.runtime.sendMessage(message, (result) => {
         if (chrome.runtime.lastError) {
-          // LLM not configured, use default behavior
-          console.log('⚠️ Background service error, using default behavior');
-          this.controller?.onNewResponse(response.text);
+          // LLM not configured, keep current state
+          console.log('⚠️ Background service error, keeping current state');
           return;
         }
 
@@ -91,9 +109,8 @@ class ContentScriptApp {
           console.log('✨ Using emotion:', result.emotion, `(confidence: ${result.confidence || 'N/A'})`);
           this.controller?.onNewResponse(response.text, result.emotion);
         } else {
-          // Fallback to default (no emotion parameter = will use SPEAKING)
-          console.log('💬 Using default SPEAKING state');
-          this.controller?.onNewResponse(response.text);
+          // No emotion detected, keep current state
+          console.log('💬 No emotion detected, keeping current state');
         }
       });
     } catch (error) {
@@ -126,9 +143,10 @@ class ContentScriptApp {
     return true; // Keep message channel open for async response
   }
 
-  private handleConfigUpdate(): void {
-    // Could reload the extension or update settings
-    console.log('Configuration updated');
+  private async handleConfigUpdate(): Promise<void> {
+    // Reload custom avatars when config is updated
+    console.log('Configuration updated, reloading custom avatars...');
+    await this.loadCustomAvatars();
   }
 
   public destroy(): void {

@@ -4,6 +4,7 @@
  */
 
 import type { IAvatarController, IAvatarOverlay } from '@/common/interfaces';
+import type { CustomAvatarImages } from '@/common/types';
 import { AvatarState } from '@/common/types';
 import { AVATAR_IMAGES } from '@/common/constants';
 import { getAssetUrl, calculateSpeakingDuration } from '@/common/utils';
@@ -12,18 +13,51 @@ export class AvatarController implements IAvatarController {
   private currentState: AvatarState = AvatarState.IDLE;
   private stateChangeCallbacks: Array<(state: AvatarState) => void> = [];
   private stateTimeout: ReturnType<typeof setTimeout> | null = null;
+  private customAvatars: CustomAvatarImages = {};
+  private lastIdleVariant: AvatarState = AvatarState.IDLE;
 
   constructor(private overlay: IAvatarOverlay) {
     // Delay initial state to ensure chrome API is ready
     setTimeout(() => {
-      this.setState(AvatarState.IDLE);
+      this.setState(this.getRandomIdleVariant());
     }, 100);
   }
 
-  public setState(state: AvatarState): void {
-    if (this.currentState === state) return;
+  /**
+   * Get a random idle variant different from the last one
+   */
+  private getRandomIdleVariant(): AvatarState {
+    const idleVariants = [AvatarState.IDLE, AvatarState.IDLE2, AvatarState.IDLE3];
 
-    this.currentState = state;
+    // Filter out the last used variant
+    const availableVariants = idleVariants.filter(v => v !== this.lastIdleVariant);
+
+    // Pick a random one from the available variants
+    const randomVariant = availableVariants[Math.floor(Math.random() * availableVariants.length)];
+
+    this.lastIdleVariant = randomVariant;
+    return randomVariant;
+  }
+
+  /**
+   * Set custom avatar images
+   */
+  public setCustomAvatars(customAvatars: CustomAvatarImages): void {
+    this.customAvatars = customAvatars;
+    // Update current state image
+    this.updateOverlayImage();
+  }
+
+  public setState(state: AvatarState): void {
+    // If setting to IDLE, randomly choose a variant
+    let actualState = state;
+    if (state === AvatarState.IDLE) {
+      actualState = this.getRandomIdleVariant();
+    }
+
+    if (this.currentState === actualState) return;
+
+    this.currentState = actualState;
     this.updateOverlayImage();
     this.notifyStateChange();
 
@@ -47,13 +81,15 @@ export class AvatarController implements IAvatarController {
    */
   public onNewResponse(text: string, emotion?: AvatarState): void {
     // If emotion is provided (from LLM analysis), use it
-    // Otherwise default to SPEAKING
-    const targetState = emotion || AvatarState.SPEAKING;
+    // Otherwise keep current state (don't change)
+    if (!emotion) {
+      console.log('💬 No emotion detected, keeping current state:', this.currentState);
+      return;
+    }
 
     console.log('🎭 Avatar state change:', {
       from: this.currentState,
-      to: targetState,
-      emotion: emotion ? emotion : 'default',
+      to: emotion,
       textLength: text.length,
     });
 
@@ -63,7 +99,7 @@ export class AvatarController implements IAvatarController {
       this.stateTimeout = null;
     }
 
-    this.setState(targetState);
+    this.setState(emotion);
 
     console.log('✨ Avatar will stay in this state until next response or page change');
   }
@@ -83,9 +119,16 @@ export class AvatarController implements IAvatarController {
   }
 
   private updateOverlayImage(): void {
-    const imagePath = AVATAR_IMAGES[this.currentState];
-    const imageUrl = getAssetUrl(imagePath);
-    this.overlay.setImage(imageUrl);
+    // Use custom avatar if available, otherwise use default
+    const customUrl = this.customAvatars[this.currentState];
+
+    if (customUrl) {
+      this.overlay.setImage(customUrl);
+    } else {
+      const imagePath = AVATAR_IMAGES[this.currentState];
+      const imageUrl = getAssetUrl(imagePath);
+      this.overlay.setImage(imageUrl);
+    }
   }
 
   private notifyStateChange(): void {

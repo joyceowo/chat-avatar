@@ -45,16 +45,17 @@ describe('AvatarController', () => {
     it('should trigger state change callbacks', () => {
       const callback = vi.fn();
       controller.onStateChange(callback);
-      controller.setState(AvatarState.SPEAKING);
-      expect(callback).toHaveBeenCalledWith(AvatarState.SPEAKING);
+      controller.setState(AvatarState.HAPPY);
+      expect(callback).toHaveBeenCalledWith(AvatarState.HAPPY);
     });
   });
 
   describe('onNewResponse', () => {
-    it('should set speaking state by default', () => {
+    it('should keep current state when no emotion provided', () => {
       vi.useFakeTimers();
+      const initialState = controller.getState();
       controller.onNewResponse('Hello world');
-      expect(controller.getState()).toBe(AvatarState.SPEAKING);
+      expect(controller.getState()).toBe(initialState);
       vi.useRealTimers();
     });
 
@@ -65,13 +66,13 @@ describe('AvatarController', () => {
       vi.useRealTimers();
     });
 
-    it('should return to idle after duration', () => {
+    it('should stay in emotion state (no auto-return to idle)', () => {
       vi.useFakeTimers();
-      controller.onNewResponse('Test');
-      expect(controller.getState()).toBe(AvatarState.SPEAKING);
+      controller.onNewResponse('Test', AvatarState.SAD);
+      expect(controller.getState()).toBe(AvatarState.SAD);
 
       vi.advanceTimersByTime(5000);
-      expect(controller.getState()).toBe(AvatarState.IDLE);
+      expect(controller.getState()).toBe(AvatarState.SAD);
       vi.useRealTimers();
     });
   });
@@ -85,7 +86,7 @@ describe('AvatarController', () => {
 
   describe('setIdle', () => {
     it('should set idle state', () => {
-      controller.setState(AvatarState.SPEAKING);
+      controller.setState(AvatarState.HAPPY);
       controller.setIdle();
       expect(controller.getState()).toBe(AvatarState.IDLE);
     });
