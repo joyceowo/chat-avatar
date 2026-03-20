@@ -181,13 +181,35 @@ Access the options page via the extension icon to configure:
 - [ ] Advanced emotion detection algorithms
 - [ ] Analytics and usage tracking
 
+## Disclaimer / 免責聲明
+
+This extension is an **unofficial**, independently developed project and is **not affiliated with, endorsed by, or associated with** OpenAI (ChatGPT), Google (Gemini), or any other AI service provider.
+
+- The extension interacts with third-party websites by observing DOM changes. These websites may update their structure at any time, which could cause the extension to stop working without notice.
+- Use of LLM API features (Gemini, OpenAI) requires your own API key and is subject to the respective provider's terms of service and pricing.
+- The extension does **not** collect, transmit, or store any personal data. All settings are stored locally via Chrome Storage.
+- The authors are **not responsible** for any issues arising from the use of this extension, including but not limited to account restrictions, data loss, or unexpected behavior.
+
+**Use at your own risk.**
+
+---
+
+本擴充功能為**非官方**的獨立開發專案，與 OpenAI（ChatGPT）、Google（Gemini）或任何其他 AI 服務提供商**無任何關聯、背書或合作關係**。
+
+- 本擴充功能透過觀察 DOM 變化與第三方網站互動。這些網站可能隨時更新其結構，導致擴充功能在無預警的情況下停止運作。
+- 使用 LLM API 功能（Gemini、OpenAI）需要您自行提供 API 金鑰，並受相關服務提供商的使用條款與定價約束。
+- 本擴充功能**不會**蒐集、傳輸或儲存任何個人資料。所有設定皆透過 Chrome Storage 儲存於本機。
+- 作者**不對**因使用本擴充功能所產生的任何問題負責，包括但不限於帳號限制、資料遺失或非預期行為。
+
+**使用風險自負。**
+
 ## License
 
-MIT
+This project is licensed under the [MIT License](LICENSE).
 
 ## Contributing
 
-Pull requests welcome! Please ensure:
+Pull requests are welcome! Please ensure:
 
 1. All tests pass: `npm test`
 2. Type checking passes: `npm run type-check`
