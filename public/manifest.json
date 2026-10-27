@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "AI Avatar Overlay v2",
-  "version": "0.0.33",
+  "version": "0.0.2",
   "description": "Displays an animated avatar that responds to AI chat interactions",
   "permissions": [
     "scripting",
@@ -29,18 +29,9 @@
     }
   ],
   "options_page": "options.html",
-  "action": {
-    "default_title": "開啟表情包與角色設定",
-    "default_icon": {
-      "16": "assets/icon16.png",
-      "48": "assets/icon48.png",
-      "128": "assets/icon128.png"
-    }
-  },
   "web_accessible_resources": [
     {
       "resources": [
-        "assets/avatar/anya/*.png",
         "assets/avatar/*.svg",
         "assets/avatar/*.webp",
         "assets/avatar/*.gif",
