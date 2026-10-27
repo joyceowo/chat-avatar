@@ -1,12 +1,11 @@
 {
   "name": "ai-avatar-overlay",
-  "version": "0.0.33",
+  "version": "0.0.2",
   "description": "Chrome extension that displays an animated avatar overlay on AI chat websites",
   "type": "module",
   "scripts": {
     "dev": "vite build --watch --mode development",
     "build": "tsc --noEmit && node scripts/build.js",
-    "verify:build": "node scripts/verifyBuild.js",
     "build:old": "tsc --noEmit && vite build",
     "test": "vitest run",
     "test:watch": "vitest",

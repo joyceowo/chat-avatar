@@ -7,14 +7,13 @@ import type { IAvatarController, IAvatarOverlay } from '@/common/interfaces';
 import type { CustomAvatarImages } from '@/common/types';
 import { AvatarState } from '@/common/types';
 import { AVATAR_IMAGES } from '@/common/constants';
-import { getAssetUrl } from '@/common/utils';
+import { getAssetUrl, calculateSpeakingDuration } from '@/common/utils';
 
 export class AvatarController implements IAvatarController {
   private currentState: AvatarState = AvatarState.IDLE;
   private stateChangeCallbacks: Array<(state: AvatarState) => void> = [];
   private stateTimeout: ReturnType<typeof setTimeout> | null = null;
   private customAvatars: CustomAvatarImages = {};
-  private presentationState: AvatarState | null = null;
   private lastIdleVariant: AvatarState = AvatarState.IDLE;
   private autoResetTimeout: ReturnType<typeof setTimeout> | null = null;
   private readonly AUTO_RESET_DELAY = 3 * 60 * 1000; // 3 minutes in milliseconds
@@ -48,12 +47,6 @@ export class AvatarController implements IAvatarController {
   public setCustomAvatars(customAvatars: CustomAvatarImages): void {
     this.customAvatars = customAvatars;
     // Update current state image
-    this.updateOverlayImage();
-  }
-
-  /** Temporarily speak with the existing avatar; keep live response state underneath. */
-  public setPresentationState(state: AvatarState | null): void {
-    this.presentationState = state;
     this.updateOverlayImage();
   }
 
@@ -172,13 +165,12 @@ export class AvatarController implements IAvatarController {
 
   private updateOverlayImage(): void {
     // Use custom avatar if available, otherwise use default
-    const state = this.presentationState ?? this.currentState;
-    const customUrl = this.customAvatars[state];
+    const customUrl = this.customAvatars[this.currentState];
 
     if (customUrl) {
       this.overlay.setImage(customUrl);
     } else {
-      const imagePath = AVATAR_IMAGES[state];
+      const imagePath = AVATAR_IMAGES[this.currentState];
       const imageUrl = getAssetUrl(imagePath);
       this.overlay.setImage(imageUrl);
     }
